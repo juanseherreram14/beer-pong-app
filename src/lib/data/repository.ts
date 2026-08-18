@@ -10,8 +10,9 @@ export const baseData: TableData = { players: [{ id: "juanse", name: "Juanse" },
 const now = () => new Date().toISOString();
 const uid = createId;
 
-function hasSupabase() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); }
-function client() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
+function supabasePublicKey() { return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; }
+function hasSupabase() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && supabasePublicKey()); }
+function client() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, supabasePublicKey()!); }
 
 export async function loadData(): Promise<TableData> {
   if (!hasSupabase()) {

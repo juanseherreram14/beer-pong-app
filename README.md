@@ -27,10 +27,10 @@ Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente.
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-La app nunca usa una service-role key. El MVP tiene RLS habilitado, pero sus políticas anon permiten leer y escribir a cualquiera que conozca la URL; esto está documentado deliberadamente porque la app es privada por URL. Antes de hacerla pública, sustituye esas políticas por autenticación y políticas por usuario/grupo.
+La app nunca usa una clave secreta ni una `service_role`. Para proyectos antiguos también acepta `NEXT_PUBLIC_SUPABASE_ANON_KEY` como respaldo, pero la clave publicable actual es la opción recomendada. El MVP tiene RLS habilitado, aunque sus políticas para el rol `anon` permiten leer y escribir a cualquiera que conozca la URL; esto está documentado deliberadamente porque la app es privada por URL. Antes de hacerla pública, sustituye esas políticas por autenticación y políticas por usuario/grupo.
 
 ### Regla de apuestas
 
