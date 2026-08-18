@@ -2,12 +2,13 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { makeInitialBet, payDebt, raiseBet, settleBet } from "@/lib/bets/engine";
+import { createId } from "@/lib/id";
 import type { DebtTransaction, Game, NightSetup, Session, TableData } from "@/types";
 
 const KEY = "the-table-local-data-v1";
 export const baseData: TableData = { players: [{ id: "juanse", name: "Juanse" }, { id: "tommy", name: "Tommy" }], sessions: [], games: [], bets: [], betEvents: [], debtTransactions: [] };
 const now = () => new Date().toISOString();
-const uid = () => crypto.randomUUID();
+const uid = createId;
 
 function hasSupabase() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); }
 function client() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }

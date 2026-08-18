@@ -8,6 +8,8 @@ Next.js (App Router), TypeScript, Tailwind CSS, Supabase/PostgreSQL y Vercel. La
 
 ## Empezar
 
+Requiere Node.js 20.9 o superior.
+
 ```bash
 npm install
 cp .env.example .env.local
@@ -48,7 +50,7 @@ npm run build
 ## Arquitectura
 
 - `src/lib/bets`: motor determinista de apuestas y deudas.
-- `src/lib/stats`: cálculos de rivalidad y Bad Decisions Index.
+- `src/lib/stats`: cálculos de rivalidad e Índice de malas decisiones.
 - `src/lib/data`: borde de persistencia Supabase/localStorage y datos demo.
 - `src/app`: experiencia mobile-first, PWA y presentación.
 - `supabase`: esquema, índices, RLS y seed.
