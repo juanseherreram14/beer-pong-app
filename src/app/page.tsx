@@ -1,69 +1,64 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import { Archive, ChevronRight, CircleDollarSign, Dice5, LoaderCircle, Plus, ReceiptText, Trophy, X } from "lucide-react";
+import { computeStats, currentStreak } from "@/lib/stats";
+import { createNight, loadData, markPaid, multiplyActiveBet, recordGame, saveData } from "@/lib/data/repository";
+import { demoData } from "@/lib/data/demo";
+import type { Bet, DebtTransaction, Game, Session, TableData } from "@/types";
+
+type View = "table" | "archive" | "tab" | "numbers";
+type Sheet = "night" | "winner" | "raise" | "close" | null;
+const people: Record<string, string> = { juanse: "Juanse", tommy: "Tommy" };
+const fmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  const [data, setData] = useState<TableData | null>(null);
+  const [view, setView] = useState<View>("table"); const [sheet, setSheet] = useState<Sheet>(null);
+  const [error, setError] = useState(""); const [saving, setSaving] = useState(false);
+  useEffect(() => { loadData().then(setData).catch((e: Error) => setError(e.message)); }, []);
+  const update = async (next: TableData) => { setData(next); setSaving(true); setError(""); try { await saveData(next); } catch { setError("La mesa no pudo guardar eso. Intenta otra vez antes de que cambie la versión de la historia."); } finally { setSaving(false); } };
+  if (!data) return <main className="loading"><LoaderCircle aria-label="Cargando registros" /> <span>Abriendo el libro de la mesa…</span></main>;
+  const open = data.sessions.find((s) => !s.endedAt) ?? data.sessions[0]; const stats = computeStats(data);
+  return <main className="shell">
+    <header className="masthead"><div><p className="kicker">Official records of questionable decisions</p><h1>THE TABLE</h1></div><div className="sync" aria-live="polite">{saving ? "guardando" : error ? "error" : "en mesa"}</div></header>
+    {error && <div role="alert" className="error"><span>{error}</span><button onClick={() => setError("")} aria-label="Cerrar error"><X size={18}/></button></div>}
+    {view === "table" && <TableView data={data} active={open} stats={stats} onNew={() => setSheet("night")} onSheet={setSheet} onDemo={() => update(demoData())} />}
+    {view === "archive" && <ArchiveView data={data} />}
+    {view === "tab" && <TabView data={data} onPaid={(id) => update(markPaid(data, id))} />}
+    {view === "numbers" && <NumbersView stats={stats} />}
+    <nav aria-label="Navegación principal" className="rail"><NavIcon label="Table" active={view === "table"} onClick={() => setView("table")} icon={<Dice5/>}/><NavIcon label="Archive" active={view === "archive"} onClick={() => setView("archive")} icon={<Archive/>}/><NavIcon label="The Tab" active={view === "tab"} onClick={() => setView("tab")} icon={<ReceiptText/>}/><NavIcon label="Numbers" active={view === "numbers"} onClick={() => setView("numbers")} icon={<Trophy/>}/></nav>
+    {sheet === "night" && <NightSheet onClose={() => setSheet(null)} onCreate={(venue, amount) => { update(createNight(data, venue, amount)); setSheet(null); }} />}
+    {sheet === "winner" && open && <WinnerSheet onClose={() => setSheet(null)} onWinner={(winner, settle) => { update(recordGame(data, open.id, winner, settle)); setSheet(null); }} hasBet={Boolean(data.bets.find((b) => b.sessionId === open.id && b.status === "OPEN"))}/>} 
+    {sheet === "raise" && open && <RaiseSheet active={data.bets.find((b) => b.sessionId === open.id && b.status === "OPEN")} onClose={() => setSheet(null)} onRaise={(m) => { try { update(multiplyActiveBet(data, open.id, m)); setSheet(null); } catch (e) { setError(e instanceof Error ? e.message : "No se pudo cambiar la apuesta."); } }} />}
+    {sheet === "close" && open && <CloseSheet active={data.bets.find((b) => b.sessionId === open.id && b.status === "OPEN")} onClose={() => setSheet(null)} onConfirm={() => setSheet("winner")} />}
+  </main>;
 }
+
+function TableView({ data, active, stats, onNew, onSheet, onDemo }: { data: TableData; active?: Session; stats: ReturnType<typeof computeStats>; onNew: () => void; onSheet: (s: Sheet) => void; onDemo: () => void }) {
+  if (!active) return <section className="clean-state"><p className="kicker">JUANSE VS TOMMY</p><div className="cup-rack" aria-hidden="true">{Array.from({ length: 10 }).map((_, i) => <i key={i}/>)}</div><h2>THE TABLE<br/>IS CLEAN.</h2><p>Por ahora.</p><div className="empty-score"><b>0</b><span>—</span><b>0</b></div><button className="primary massive" onClick={onNew}><Plus/> Empezar la primera noche</button><button className="quiet" onClick={onDemo}>Cargar una noche de ejemplo</button></section>;
+  const games = data.games.filter((g) => g.sessionId === active.id); const score = scoreOf(games); const streak = currentStreak(games);
+  const activeBet = data.bets.find((b) => b.sessionId === active.id && b.status === "OPEN");
+  return <section className="table-view"><div className="night-line"><span>{fmt.format(new Date(active.date + "T12:00:00"))} · {active.venue}</span><button className="quiet compact" onClick={onNew}>Nueva noche <Plus size={15}/></button></div><ScoreBoard juanse={score.juanse} tommy={score.tommy} label="ESTA NOCHE"/><p className="streak" aria-live="polite">{streak ? <><b>{people[streak.playerId]}</b> <span>{Array.from({length: Math.min(streak.count, 5)}).map(() => "W").join(" ")}</span> <em>racha de {streak.count}</em></> : "La primera versión de la historia empieza aquí."}</p>{activeBet ? <BetBoard bet={activeBet} /> : <div className="bet-board quiet-board"><span>No hay apuesta activa.</span><button onClick={onNew}>Abrir otra mesa</button></div>}<div className="actions"><button className="primary record" onClick={() => onSheet("winner")}><Trophy/> Registrar partida</button>{activeBet && <><button className="accent" onClick={() => onSheet("raise")}>Doble / triple <ChevronRight size={19}/></button><button className="outline" onClick={() => onSheet("close")}>Cobrar / cerrar deuda</button></>}</div><aside className="rivalry-note"><span>ALL TIME</span><b>{stats.juanseWins} — {stats.tommyWins}</b><p>{stats.leader ? `${stats.leader.name} lidera por ${stats.leader.margin}.` : "Ni la mesa puede separar esto."}</p></aside></section>;
+}
+function ScoreBoard({ juanse, tommy, label }: { juanse: number; tommy: number; label: string }) { return <section className="scoreboard" aria-label={`Marcador: Juanse ${juanse}, Tommy ${tommy}`}><p>{label}</p><div><span>JUANSE</span><strong>{juanse}</strong><i>—</i><strong>{tommy}</strong><span>TOMMY</span></div></section>; }
+function BetBoard({ bet }: { bet: Bet }) { return <section className="bet-board"><div className="bet-head"><span>EN JUEGO</span><span>{bet.currentAmount > bet.initialAmount ? "MULTIPLICADO" : "APUESTA BASE"}</span></div><strong>{bet.currentAmount}<small> SHOTS</small></strong><p>{bet.currentAmount > bet.initialAmount ? `De ${bet.initialAmount} a ${bet.currentAmount}. La mesa tomó nota.` : "Una partida decide quién se va con la cuenta."}</p></section>; }
+
+function ArchiveView({ data }: { data: TableData }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  return <section className="archive"><p className="kicker">THE ARCHIVE</p><h2>NOCHES<br/>QUE LA MESA RECUERDA.</h2>{data.sessions.length === 0 ? <p className="archive-empty">Todavía no hay nada que negar.</p> : data.sessions.map((session) => {
+    const games = data.games.filter((g) => g.sessionId === session.id); const score = scoreOf(games); const bet = data.bets.filter((b) => b.sessionId === session.id).at(-1); const events = data.betEvents.filter((e) => data.bets.some((b) => b.id === e.betId && b.sessionId === session.id));
+    return <article className="archive-entry" key={session.id}><div className="date-stamp">{fmt.format(new Date(session.date + "T12:00:00"))}</div><div><p>{session.venue}</p><h3>Juanse {score.juanse} <i>—</i> {score.tommy} Tommy</h3><small>{bet ? `${bet.currentAmount} shots estuvieron en juego` : "Solo orgullo, por suerte"}</small><button className="archive-toggle" onClick={() => setExpanded(expanded === session.id ? null : session.id)}>{expanded === session.id ? "Cerrar registro" : "Ver la noche →"}</button>{expanded === session.id && <ol className="timeline">{[...games.map((game) => ({ at: game.createdAt, label: `${people[game.winnerId]} gana`, detail: "partida registrada" })), ...events.map((event) => ({ at: event.createdAt, label: event.type === "INITIAL" ? "Apuesta inicial" : event.type === "SETTLED" ? "Deuda cerrada" : event.type === "DOUBLE_OR_NOTHING" ? "Doble o nada" : event.type === "TRIPLE_OR_NOTHING" ? "Triple o nada" : "Apuesta ajustada", detail: `${event.amountBefore} → ${event.amountAfter} shots` }))].sort((a,b) => a.at.localeCompare(b.at)).map((entry, i) => <li key={`${entry.at}-${i}`}><time>{new Date(entry.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</time><span><b>{entry.label}</b><small>{entry.detail}</small></span></li>)}</ol>}</div></article>;
+  })}</section>;
+}
+function TabView({ data, onPaid }: { data: TableData; onPaid: (id: string) => void }) { const open = data.debtTransactions.filter((d) => d.status === "OPEN"); const paid = data.debtTransactions.filter((d) => d.status === "PAID"); const net = open.reduce((sum, d) => sum + (d.creditorPlayerId === "juanse" ? d.amount : -d.amount), 0); return <section className="tab-view"><p className="kicker">THE TAB</p><h2>BALANCE<br/>ACTUAL</h2><div className="balance"><strong>{Math.abs(net)}</strong><span>SHOTS</span><p>{net === 0 ? "Milagrosamente estamos a paz y salvo." : `${people[net > 0 ? "tommy" : "juanse"]} debe a ${people[net > 0 ? "juanse" : "tommy"]}.`}</p></div><h3>CUENTA PENDIENTE</h3>{open.length ? open.map((debt) => <DebtLine debt={debt} key={debt.id} action={() => onPaid(debt.id)}/>) : <p className="ledger-empty">Nada pendiente. Algo sospechoso pasó.</p>} {paid.length > 0 && <><h3 className="paid-heading">YA PAGADO</h3>{paid.map((debt) => <DebtLine debt={debt} key={debt.id}/>)}</>}</section>; }
+function DebtLine({ debt, action }: { debt: DebtTransaction; action?: () => void }) { return <article className="debt-line"><div><b>{people[debt.debtorPlayerId]} <span>→</span> {people[debt.creditorPlayerId]}</b><small>{debt.amount} shots · {debt.status === "PAID" ? "pagado" : "deuda oficialmente reconocida"}</small></div>{action && <button className="outline small" onClick={action}>Pagado</button>}</article>; }
+function NumbersView({ stats }: { stats: ReturnType<typeof computeStats> }) { return <section className="numbers"><p className="kicker">THE NUMBERS</p><h2>ESTADÍSTICAS<br/>INNECESARIAMENTE SERIAS.</h2><ScoreBoard juanse={stats.juanseWins} tommy={stats.tommyWins} label="HEAD TO HEAD · ALL TIME"/><div className="split-stat"><span><b>{stats.juanseRate}%</b> win rate Juanse</span><span><b>{stats.tommyRate}%</b> win rate Tommy</span></div><section className="bad-index"><p>BAD DECISIONS INDEX</p><strong>{stats.badIndex}<small> / 100</small></strong><span>{stats.badCopy}</span><small>8 puntos por multiplicador + 1 por cada shot añadido a la apuesta. Sin IA. Sin excusas.</small></section><dl className="stat-list"><div><dt>Partidas totales</dt><dd>{stats.totalGames}</dd></div><div><dt>Racha máxima</dt><dd>J {stats.juanseMaxStreak} · T {stats.tommyMaxStreak}</dd></div><div><dt>Noches ganadas</dt><dd>J {stats.juanseNights} · T {stats.tommyNights}</dd></div><div><dt>Mayor deuda</dt><dd>{stats.maxDebt} shots</dd></div><div><dt>Doble o nada</dt><dd>{stats.doubles}</dd></div><div><dt>Triple o nada</dt><dd>{stats.triples}</dd></div><div><dt>Shots pagados</dt><dd>{stats.shotsPaid}</dd></div></dl></section>; }
+
+function Sheet({ children, onClose }: { children: ReactNode; onClose: () => void }) { return <div className="sheet-backdrop" role="presentation"><section className="sheet" role="dialog" aria-modal="true"><button className="close" onClick={onClose} aria-label="Cerrar"><X/></button>{children}</section></div>; }
+function NightSheet({ onClose, onCreate }: { onClose: () => void; onCreate: (venue: string, amount: number) => void }) { const [venue, setVenue] = useState("Shot Me"); const [amount, setAmount] = useState("10"); return <Sheet onClose={onClose}><p className="kicker">NUEVA NOCHE</p><h2>¿DÓNDE<br/>EMPIEZA ESTO?</h2><label>Lugar<input value={venue} onChange={(e) => setVenue(e.target.value)} autoFocus/></label><label>Shots en juego<input inputMode="numeric" type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)}/></label><p className="hint">La apuesta queda abierta. El ganador de la partida decisiva define quién debe.</p><button className="primary massive" onClick={() => onCreate(venue, Number(amount))}>Poner la mesa</button></Sheet>; }
+function WinnerSheet({ onClose, onWinner, hasBet }: { onClose: () => void; onWinner: (winner: string, settle: boolean) => void; hasBet: boolean }) { const [winner, setWinner] = useState<string | null>(null); return <Sheet onClose={onClose}><p className="kicker">REGISTRAR PARTIDA</p><h2>¿QUIÉN SE LA<br/>LLEVÓ?</h2><div className="winner-buttons"><button onClick={() => setWinner("juanse")} className={winner === "juanse" ? "selected" : ""}>JUANSE</button><span>vs</span><button onClick={() => setWinner("tommy")} className={winner === "tommy" ? "selected" : ""}>TOMMY</button></div>{winner && <><p className="hint">{hasBet ? "¿Esta fue la partida que cierra la apuesta?" : "El marcador se actualiza en silencio."}</p><button className="primary massive" onClick={() => onWinner(winner, hasBet)}>Registrar y cerrar apuesta</button>{hasBet && <button className="outline full" onClick={() => onWinner(winner, false)}>Solo registrar partida</button>}</>}</Sheet>; }
+function RaiseSheet({ active, onClose, onRaise }: { active?: Bet; onClose: () => void; onRaise: (m: number) => void }) { const [custom, setCustom] = useState("1.5"); if (!active) return null; return <Sheet onClose={onClose}><p className="kicker">SUBIR LA APUESTA</p><h2>DOBLE O<br/>NADA?</h2><div className="raise-preview"><b>{active.currentAmount}</b><span>→</span><b>{active.currentAmount * 2}</b><small>shots · una partida decide la salida</small></div><button className="primary massive" onClick={() => onRaise(2)}>Nos hacemos responsables · x2</button><button className="accent full" onClick={() => onRaise(3)}>Esto escala rápido · x3</button><label>Multiplicador personalizado<input inputMode="decimal" value={custom} onChange={(e) => setCustom(e.target.value)}/></label><button className="outline full" onClick={() => onRaise(Number(custom))}>Aplicar x{custom}</button><button className="quiet full" onClick={onClose}>Todavía tenemos criterio</button></Sheet>; }
+function CloseSheet({ active, onClose, onConfirm }: { active?: Bet; onClose: () => void; onConfirm: () => void }) { if (!active) return null; return <Sheet onClose={onClose}><p className="kicker">CERRAR APUESTA</p><h2>{active.currentAmount} SHOTS<br/>EN LA LÍNEA.</h2><p className="hint">Registra la partida decisiva. Quien pierda queda con la deuda; no se acumula otra cuenta.</p><button className="primary massive" onClick={onConfirm}><CircleDollarSign/> Registrar resultado final</button></Sheet>; }
+function NavIcon({ label, active, onClick, icon }: { label: string; active: boolean; onClick: () => void; icon: ReactNode }) { return <button className={active ? "active" : ""} onClick={onClick}>{icon}<span>{label}</span></button>; }
+function scoreOf(games: Game[]) { return { juanse: games.filter((g) => g.winnerId === "juanse").length, tommy: games.filter((g) => g.winnerId === "tommy").length }; }
