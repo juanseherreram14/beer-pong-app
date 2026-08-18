@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/lib/bets/engine.test.js .test-build/lib/stats/index.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.78.0",

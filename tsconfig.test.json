@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2022",
+    "esModuleInterop": true
+  },
+  "include": ["src/types/index.ts", "src/lib/bets/engine.ts", "src/lib/bets/engine.test.ts", "src/lib/stats/index.ts", "src/lib/stats/index.test.ts"]
+}
