@@ -40,6 +40,7 @@ export function computeStats(data: TableData) {
     maxDebt, maxBet: maxDebt, shotsWagered: initialTotal, shotsPaid,
     doubles: data.betEvents.filter((e) => e.type === "DOUBLE_OR_NOTHING").length,
     triples: data.betEvents.filter((e) => e.type === "TRIPLE_OR_NOTHING").length,
+    recentRivalry: rivalryGames.slice(-8).map((game) => game.winnerId),
     badIndex, badCopy: badIndex >= 75 ? "Era completamente evitable." : badIndex >= 40 ? "Las matemáticas pidieron salir de ahí." : "Sorprendentemente moderado.",
     leader: juanseWins === tommyWins ? null : { name: nameOf(juanseWins > tommyWins ? "juanse" : "tommy"), margin: Math.abs(juanseWins - tommyWins) },
   };
