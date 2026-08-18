@@ -1,7 +1,5 @@
 import type { Game, PlayerId, TableData } from "@/types";
 
-const nameOf = (id: PlayerId) => id === "juanse" ? "Juanse" : "Tommy";
-
 function longestStreak(games: Game[], playerId: PlayerId) {
   let run = 0; let best = 0;
   for (const game of games) { run = game.winnerId === playerId ? run + 1 : 0; best = Math.max(best, run); }
@@ -18,11 +16,13 @@ export function currentStreak(games: Game[]) {
 }
 
 export function computeStats(data: TableData) {
+  const rivalryGames = data.games.filter((game) => data.sessions.find((session) => session.id === game.sessionId)?.mode !== "2v2");
+  const nameOf = (id: PlayerId) => data.players.find((player) => player.id === id)?.name ?? (id === "juanse" ? "Juanse" : "Tommy");
   const totalGames = data.games.length;
-  const wins = (id: PlayerId) => data.games.filter((g) => g.winnerId === id).length;
+  const wins = (id: PlayerId) => rivalryGames.filter((g) => g.winnerId === id).length;
   const juanseWins = wins("juanse"); const tommyWins = wins("tommy");
   const sessionWins = (id: PlayerId) => data.sessions.filter((s) => {
-    const games = data.games.filter((g) => g.sessionId === s.id);
+    const games = data.games.filter((g) => g.sessionId === s.id && s.mode !== "2v2");
     return games.length > 0 && winsIn(games, id) > winsIn(games, id === "juanse" ? "tommy" : "juanse");
   }).length;
   const maxDebt = Math.max(0, ...data.bets.map((b) => b.currentAmount));
@@ -33,10 +33,10 @@ export function computeStats(data: TableData) {
   // Transparent index: 8 pts each escalation + 1 per shot added, capped at 100.
   const badIndex = Math.min(100, multipliers.length * 8 + escalation);
   return {
-    totalGames, juanseWins, tommyWins, juanseRate: totalGames ? Math.round(juanseWins / totalGames * 100) : 0,
-    tommyRate: totalGames ? Math.round(tommyWins / totalGames * 100) : 0,
-    juanseMaxStreak: longestStreak(data.games, "juanse"), tommyMaxStreak: longestStreak(data.games, "tommy"),
-    current: currentStreak(data.games), juanseNights: sessionWins("juanse"), tommyNights: sessionWins("tommy"),
+    totalGames, juanseWins, tommyWins, juanseName: nameOf("juanse"), tommyName: nameOf("tommy"), juanseRate: rivalryGames.length ? Math.round(juanseWins / rivalryGames.length * 100) : 0,
+    tommyRate: rivalryGames.length ? Math.round(tommyWins / rivalryGames.length * 100) : 0,
+    juanseMaxStreak: longestStreak(rivalryGames, "juanse"), tommyMaxStreak: longestStreak(rivalryGames, "tommy"),
+    current: currentStreak(rivalryGames), juanseNights: sessionWins("juanse"), tommyNights: sessionWins("tommy"),
     maxDebt, maxBet: maxDebt, shotsWagered: initialTotal, shotsPaid,
     doubles: data.betEvents.filter((e) => e.type === "DOUBLE_OR_NOTHING").length,
     triples: data.betEvents.filter((e) => e.type === "TRIPLE_OR_NOTHING").length,

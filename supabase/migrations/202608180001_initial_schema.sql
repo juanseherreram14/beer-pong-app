@@ -10,7 +10,10 @@ create table public.players (
 create table public.sessions (
   id uuid primary key default gen_random_uuid(), date date not null default current_date,
   venue text not null default 'Shot Me', started_at timestamptz not null default now(),
-  ended_at timestamptz, notes text, created_at timestamptz not null default now()
+  ended_at timestamptz, notes text, created_at timestamptz not null default now(),
+  mode text not null default '1v1' check(mode in ('1v1','2v2')),
+  team_a_player_ids jsonb not null default '["juanse"]'::jsonb,
+  team_b_player_ids jsonb not null default '["tommy"]'::jsonb
 );
 create table public.games (
   id uuid primary key default gen_random_uuid(), session_id uuid not null references public.sessions(id) on delete cascade,

@@ -1,6 +1,7 @@
 export type PlayerId = "juanse" | "tommy" | string;
 
 export type Player = { id: PlayerId; name: string; nickname?: string };
+export type GameMode = "1v1" | "2v2";
 export type BetStatus = "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
 export type BetEventType =
   | "INITIAL"
@@ -19,6 +20,15 @@ export type Session = {
   endedAt?: string | null;
   notes?: string | null;
   createdAt: string;
+  mode?: GameMode;
+  teamAPlayerIds?: PlayerId[];
+  teamBPlayerIds?: PlayerId[];
+};
+
+export type NightSetup = {
+  mode: GameMode;
+  teamA: { id: PlayerId; name: string }[];
+  teamB: { id: PlayerId; name: string }[];
 };
 
 export type Game = {
