@@ -473,31 +473,29 @@ button:disabled {
   margin-top: 24px;
 }
 
-.example-link {
-  display: grid;
-  min-height: 56px;
-  margin: 17px auto 0;
-  padding: 5px 10px;
-  border: 0;
-  color: var(--muted);
-  background: transparent;
-  font-size: 10px;
-  line-height: 1.45;
-}
-
-.example-link span {
-  color: var(--paper-dim);
-  font-size: 11px;
-  font-weight: 800;
-}
-
 .cup-rack {
-  display: grid;
+  position: relative;
+  display: flex;
   margin-inline: auto;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  flex-direction: column;
   align-items: center;
-  justify-items: center;
+  justify-content: center;
+}
+
+.cup-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cup-row + .cup-row {
+  margin-top: -4px;
+}
+
+.cup-row:nth-child(odd) {
+  transform: translateX(-0.5px);
 }
 
 .cup-rack i,
@@ -518,7 +516,22 @@ button:disabled {
 
 .cup-rack-hero {
   width: 128px;
-  height: 74px;
+  min-height: 72px;
+}
+
+.cup-rack-hero::before {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: -54px;
+  left: -54px;
+  height: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.cup-rack-hero .cup-row {
+  gap: 6px;
 }
 
 .cup-rack-hero i {
@@ -529,7 +542,11 @@ button:disabled {
 
 .cup-rack-small {
   width: 74px;
-  height: 42px;
+  min-height: 42px;
+}
+
+.cup-rack-small .cup-row {
+  gap: 3px;
 }
 
 .cup-rack-small i {
@@ -539,9 +556,13 @@ button:disabled {
 
 .cup-rack-stake {
   width: 91px;
-  height: 54px;
+  min-height: 44px;
   margin: 0;
   opacity: 0.9;
+}
+
+.cup-rack-stake .cup-row {
+  gap: 4px;
 }
 
 .cup-rack-stake i {

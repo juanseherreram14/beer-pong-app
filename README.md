@@ -16,7 +16,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente. El botón **Cargar una noche de ejemplo** no escribe en producción por sí solo: solo carga la historia demo en el almacén activo.
+Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente y comienza con la mesa en cero.
 
 ## Supabase
 
@@ -51,7 +51,7 @@ npm run build
 
 - `src/lib/bets`: motor determinista de apuestas y deudas.
 - `src/lib/stats`: cálculos de rivalidad e Índice de malas decisiones.
-- `src/lib/data`: borde de persistencia Supabase/localStorage y datos demo.
+- `src/lib/data`: borde de persistencia Supabase/localStorage y estado inicial.
 - `src/app`: experiencia mobile-first, PWA y presentación.
 - `supabase`: esquema, índices, RLS y seed.
 

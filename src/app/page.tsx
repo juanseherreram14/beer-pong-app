@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Archive, Check, ChevronRight, CircleDollarSign, Dice5, Plus, ReceiptText, Trophy, X } from "lucide-react";
 import { computeStats, currentStreak } from "@/lib/stats";
 import { createNight, loadData, markPaid, multiplyActiveBet, recordGame, saveData } from "@/lib/data/repository";
-import { demoData } from "@/lib/data/demo";
 import type { Bet, DebtTransaction, Game, NightSetup, PlayerId, Session, TableData } from "@/types";
 
 type View = "table" | "archive" | "tab" | "numbers";
@@ -15,7 +14,6 @@ type Sides = { a: Side; b: Side };
 
 const dateShort = new Intl.DateTimeFormat("es-EC", { day: "numeric", month: "short" });
 const dateLong = new Intl.DateTimeFormat("es-EC", { day: "2-digit", month: "short", year: "numeric" });
-const cupGrid = [[4, 1], [3, 2], [5, 2], [2, 3], [4, 3], [6, 3], [1, 4], [3, 4], [5, 4], [7, 4]];
 
 export default function Home() {
   const [data, setData] = useState<TableData | null>(null);
@@ -56,7 +54,7 @@ export default function Home() {
     {feedback && <div className="notice notice-success" role="status"><Check size={17}/><span>{feedback}</span></div>}
 
     <div className="view-stage" key={view}>
-      {view === "table" && <TableView data={data} active={activeSession} stats={stats} onNew={() => setSheet("night")} onRegister={() => openWinner(false)} onRaise={() => setSheet("raise")} onCloseBet={() => setSheet("close")} onDemo={() => update(demoData(), "La noche de ejemplo ya está sobre la mesa.")} />}
+      {view === "table" && <TableView data={data} active={activeSession} stats={stats} onNew={() => setSheet("night")} onRegister={() => openWinner(false)} onRaise={() => setSheet("raise")} onCloseBet={() => setSheet("close")} />}
       {view === "archive" && <ArchiveView data={data} />}
       {view === "tab" && <TabView data={data} onPaid={(id) => update(markPaid(data, id), "Pago registrado. La historia sigue ahí.")} />}
       {view === "numbers" && <NumbersView stats={stats} />}
@@ -116,10 +114,10 @@ function BottomNav({ view, onChange }: { view: View; onChange: (view: View) => v
   return <nav aria-label="Navegación principal" className="rail"><NavItem label="Mesa" active={view === "table"} onClick={() => onChange("table")} icon={<Dice5/>}/><NavItem label="Archivo" active={view === "archive"} onClick={() => onChange("archive")} icon={<Archive/>}/><NavItem label="Cuenta" active={view === "tab"} onClick={() => onChange("tab")} icon={<ReceiptText/>}/><NavItem label="Números" active={view === "numbers"} onClick={() => onChange("numbers")} icon={<Trophy/>}/></nav>;
 }
 
-function TableView({ data, active, stats, onNew, onRegister, onRaise, onCloseBet, onDemo }: { data: TableData; active?: Session; stats: Stats; onNew: () => void; onRegister: () => void; onRaise: () => void; onCloseBet: () => void; onDemo: () => void }) {
+function TableView({ data, active, stats, onNew, onRegister, onRaise, onCloseBet }: { data: TableData; active?: Session; stats: Stats; onNew: () => void; onRegister: () => void; onRaise: () => void; onCloseBet: () => void }) {
   if (!active) {
     const juanse = playerName(data, "juanse"); const tommy = playerName(data, "tommy");
-    return <section className="clean-state"><div className="empty-poster"><p className="versus-label">{juanse.toUpperCase()} <span>VS</span> {tommy.toUpperCase()}</p><CupRack size="hero"/><h2>LA MESA<br/>ESTÁ LIMPIA.</h2><p className="muted-copy">Por ahora.</p><div className="empty-score" aria-label={`${juanse} cero, ${tommy} cero`}><span><small>{juanse}</small><b>0</b></span><i>—</i><span><small>{tommy}</small><b>0</b></span></div></div><button className="primary mechanical" onClick={onNew}><span>Empezar la primera noche</span><ChevronRight size={20}/></button><button className="example-link" onClick={onDemo}>¿Quieres ver cómo se pone esto?<span>Cargar una noche de ejemplo →</span></button></section>;
+    return <section className="clean-state"><div className="empty-poster"><p className="versus-label">{juanse.toUpperCase()} <span>VS</span> {tommy.toUpperCase()}</p><CupRack size="hero"/><h2>LA MESA<br/>ESTÁ LIMPIA.</h2><p className="muted-copy">Por ahora.</p><div className="empty-score" aria-label={`${juanse} cero, ${tommy} cero`}><span><small>{juanse}</small><b>0</b></span><i>—</i><span><small>{tommy}</small><b>0</b></span></div></div><button className="primary mechanical" onClick={onNew}><span>Empezar la primera noche</span><ChevronRight size={20}/></button></section>;
   }
 
   const sides = sidesFor(data, active); const games = data.games.filter((game) => game.sessionId === active.id); const score = scoreOf(games, sides); const streak = currentStreak(games); const activeBet = data.bets.find((bet) => bet.sessionId === active.id && bet.status === "OPEN"); const streakSide = streak ? sideFor(streak.playerId, sides) : null; const streakName = streakSide ? sides[streakSide].label : "";
@@ -176,7 +174,16 @@ function FormRow({ name, playerId, results }: { name: string; playerId: PlayerId
 function BadDecisions({ stats }: { stats: Stats }) { return <section className="bad-decisions"><div className="decision-title">ÍNDICE DE<br/><b>MALAS DECISIONES</b></div><div className="decision-score"><strong>{stats.badIndex}</strong><span>/ 100</span></div><div className="decision-meter" aria-label={`Índice de malas decisiones: ${stats.badIndex} de 100`}><i style={{ "--meter": `${stats.badIndex}%` } as CSSProperties}/></div><p>{stats.badCopy.toUpperCase()}</p><small>8 puntos por multiplicador + 1 por cada shot añadido. Sin IA. Sin excusas.</small></section>; }
 
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: ReactNode }) { return <header className="section-heading"><p>{eyebrow}</p><h2>{title}</h2><CupDivider/></header>; }
-function CupRack({ size = "small", count = 10 }: { size?: "small" | "hero" | "stake"; count?: number }) { return <div className={`cup-rack cup-rack-${size}`} aria-hidden="true">{cupGrid.slice(0, count).map(([column, row], index) => <i style={{ gridColumn: column, gridRow: row }} key={index}/>)}</div>; }
+function CupRack({ size = "small", count = 10 }: { size?: "small" | "hero" | "stake"; count?: number }) {
+  let remaining = Math.max(0, count);
+  const rows: number[] = [];
+  for (let rowSize = 1; remaining > 0; rowSize += 1) {
+    const cupsInRow = Math.min(rowSize, remaining);
+    rows.push(cupsInRow);
+    remaining -= cupsInRow;
+  }
+  return <div className={`cup-rack cup-rack-${size}`} aria-hidden="true">{rows.map((cupsInRow, rowIndex) => <span className="cup-row" key={rowIndex}>{Array.from({ length: cupsInRow }, (_, cupIndex) => <i key={cupIndex}/>)}</span>)}</div>;
+}
 function CupDivider() { return <div className="cup-divider" aria-hidden="true"><i/><i/><i/><span/></div>; }
 function LoadingTable() { return <main className="loading-table"><CupRack size="hero"/><span>ABRIENDO EL LIBRO DE LA MESA</span><div><i/><i/><i/></div></main>; }
 
