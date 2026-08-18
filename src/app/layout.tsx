@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "THE TABLE — Juanse vs Tommy",
-  description: "Official records of questionable decisions.",
+  description: "Registro oficial de decisiones cuestionables.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "THE TABLE" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
