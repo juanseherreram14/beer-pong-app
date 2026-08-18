@@ -26,6 +26,10 @@ export function computeStats(data: TableData) {
     return games.length > 0 && winsIn(games, id) > winsIn(games, id === "juanse" ? "tommy" : "juanse");
   }).length;
   const maxDebt = Math.max(0, ...data.bets.map((b) => b.currentAmount));
+  const biggestBet = [...data.bets].sort((a, b) => b.currentAmount - a.currentAmount)[0];
+  const betProgression = biggestBet
+    ? data.betEvents.filter((event) => event.betId === biggestBet.id && event.type !== "SETTLED").map((event) => event.amountAfter).filter((amount, index, values) => index === 0 || amount !== values[index - 1])
+    : [];
   const shotsPaid = data.debtTransactions.filter((d) => d.status === "PAID").reduce((sum, d) => sum + d.amount, 0);
   const multipliers = data.betEvents.filter((e) => e.multiplier && e.multiplier > 1);
   const initialTotal = data.bets.reduce((sum, b) => sum + b.initialAmount, 0);
@@ -41,6 +45,7 @@ export function computeStats(data: TableData) {
     doubles: data.betEvents.filter((e) => e.type === "DOUBLE_OR_NOTHING").length,
     triples: data.betEvents.filter((e) => e.type === "TRIPLE_OR_NOTHING").length,
     recentRivalry: rivalryGames.slice(-8).map((game) => game.winnerId),
+    betProgression,
     badIndex, badCopy: badIndex >= 75 ? "Era completamente evitable." : badIndex >= 40 ? "Las matemáticas pidieron salir de ahí." : "Sorprendentemente moderado.",
     leader: juanseWins === tommyWins ? null : { name: nameOf(juanseWins > tommyWins ? "juanse" : "tommy"), margin: Math.abs(juanseWins - tommyWins) },
   };

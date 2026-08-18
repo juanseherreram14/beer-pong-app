@@ -8,13 +8,15 @@ Next.js (App Router), TypeScript, Tailwind CSS, Supabase/PostgreSQL y Vercel. La
 
 ## Empezar
 
+Requiere Node.js 20.9 o superior.
+
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente. El botón **Cargar una noche de ejemplo** no escribe en producción por sí solo: solo carga la historia demo en el almacén activo.
+Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente y comienza con la mesa en cero.
 
 ## Supabase
 
@@ -25,10 +27,10 @@ Para desarrollo visual sin Supabase, la app usa `localStorage` automáticamente.
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-La app nunca usa una service-role key. El MVP tiene RLS habilitado, pero sus políticas anon permiten leer y escribir a cualquiera que conozca la URL; esto está documentado deliberadamente porque la app es privada por URL. Antes de hacerla pública, sustituye esas políticas por autenticación y políticas por usuario/grupo.
+La app nunca usa una clave secreta ni una `service_role`. Para proyectos antiguos también acepta `NEXT_PUBLIC_SUPABASE_ANON_KEY` como respaldo, pero la clave publicable actual es la opción recomendada. El MVP tiene RLS habilitado, aunque sus políticas para el rol `anon` permiten leer y escribir a cualquiera que conozca la URL; esto está documentado deliberadamente porque la app es privada por URL. Antes de hacerla pública, sustituye esas políticas por autenticación y políticas por usuario/grupo.
 
 ### Regla de apuestas
 
@@ -48,8 +50,8 @@ npm run build
 ## Arquitectura
 
 - `src/lib/bets`: motor determinista de apuestas y deudas.
-- `src/lib/stats`: cálculos de rivalidad y Bad Decisions Index.
-- `src/lib/data`: borde de persistencia Supabase/localStorage y datos demo.
+- `src/lib/stats`: cálculos de rivalidad e Índice de malas decisiones.
+- `src/lib/data`: borde de persistencia Supabase/localStorage y estado inicial.
 - `src/app`: experiencia mobile-first, PWA y presentación.
 - `supabase`: esquema, índices, RLS y seed.
 
